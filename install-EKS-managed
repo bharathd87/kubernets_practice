@@ -1,0 +1,51 @@
+Create instance:
+	attach IAM role to that instance(admin full prev role has to be created in IAM Role)
+	
+
+1.EKSCTL:	
+	curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+	sudo mv /tmp/eksctl /usr/local/bin 
+	eksctl version
+
+2.KUBECTL:
+   curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+
+   Make it executable:
+   chmod +x kubectl
+
+Move to user binary directory:
+   mkdir -p ~/.local/bin
+   mv ./kubectl ~/.local/bin/kubectl
+
+ADD kubectl TO PATH (IMPORTANT)
+   echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
+   source ~/.bashrc
+
+VERIFY kubectl INSTALLATION
+  kubectl version
+
+3.AWS-CLI:
+
+  curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+  sudo apt install unzip -y
+  unzip awscliv2.zip
+  sudo ./aws/install
+  aws --version
+
+4. Docker:
+   sudo apt update
+   sudo apt install docker.io -y
+   sudo usermod -aG docker ubuntu
+
+   exit and Relogin
+   
+
+  To create cluster via CLI
+
+  eksctl create cluster -f cluster.yaml
+  eksctl create cluster --name my-eks-cluster --nodegroup-name my-worker-node --node-type t2.medium --nodes 2 --managed --region us-east-1
+  eksctl delete cluster --name my-eks-cluster --region us-east-1
+
+
+  eksctl get nodegroup --name $EKS_DEFAULT_MNG_NAME --cluster $EKS_CLUSTER_NAME
+  eksctl scale nodegroup --name eks-ng --cluster basic-cluster --nodes 3 --nodes-min 3 --nodes-max 6 --region us-east-1

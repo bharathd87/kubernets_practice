@@ -51,8 +51,8 @@ spec:
         persistentVolumeClaim:
           claimName: my-pvc
 
-Complete Flow (Very Important)
-Deployment → Pod → PersistentVolumeClaim (PVC) → StorageClass → Cloud Disk (EBS)
+Architecture Flow or Complete Flow (Very Important)
+Deployment → Pod → PersistentVolumeClaim → StorageClass → AWS EBS CSI Driver → AWS EBS Volume → Attached to EKS Worker Node
 
 Real Example in EKS (When PVC is created)
 PVC → StorageClass → creates EBS automatically

@@ -54,4 +54,37 @@ spec:
         persistentVolumeClaim:
           claimName: nginx-pvc
 
+Complete Flow (Very Important)
+Deployment → Pod → Volume (hostPath) → Node Local Disk (/mnt/data or any path)
+
+
+If you use type as DirectoryOrCreate in deployment/pod.yaml
+NOT need PV or PVC for this configuration.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-hostpath
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx
+  template:
+    metadata:
+      labels:
+        app: nginx
+    spec:
+      containers:
+      - name: nginx
+        image: nginx
+        volumeMounts:
+        - name: storage
+          mountPath: /data
+
+      volumes:
+      - name: storage
+        hostPath:
+          path: /mnt/data
+          type: DirectoryOrCreate
 

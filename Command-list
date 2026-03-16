@@ -1,0 +1,7 @@
+kubectl port-forward pod/nginx-pod 8080:80
+curl http://localhost:8080
+Local Port 8080 → Pod Port 80 explaination
+
+kubectl rollout history deployment/nginx-deployment
+kubectl rollout undo deployment/nginx-deployment --to-revision=2
+kubectl rollout undo deployment/nginx-deployment

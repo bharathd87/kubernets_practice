@@ -1,5 +1,7 @@
-Get cluster info
+ADDON---
+eksctl create addon   --name aws-ebs-csi-driver   --cluster my-eks-cluster-1503   --region us-east-1
 
+Get cluster info----
 aws eks describe-nodegroup \
 --cluster-name <your-cluster> \
 --nodegroup-name <nodegroup-name> \
@@ -8,15 +10,11 @@ aws eks describe-nodegroup \
 You will get something like:
 arn:aws:iam::123456789:role/eks-node-role
 
-Attach Required Policy
-
+Attach Required Policy---
 Attach this policy to the node role:
 aws iam attach-role-policy \
 --role-name <node-role> \
 --policy-arn arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy
-
-ADDON
-eksctl create addon   --name aws-ebs-csi-driver   --cluster my-eks-cluster-1503   --region us-east-1
 
 
 storage-class.yaml

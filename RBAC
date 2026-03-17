@@ -1,0 +1,141 @@
+https://www.learnitguide.net/2025/07/kubernetes-rbac-explained-with-hands-on-demo.html
+https://youtu.be/7ubwSKbJp_Y?si=8bxVFRtIVmcqpq_s
+
+Authentication – Who is making the request?
+In EKS, the identity is verified using AWS IAM.
+
+Authorization – What is that user allowed to do?
+This is controlled using RBAC.
+
+Creating IAM Users
+I’ve added them with the AdministratorAccess policy just for the sake of demo.
+Each user has their own access key ID and secret, which is configured using AWS CLI on my system
+
+aws configure
+aws sts get-caller-identity  #to get info of which user 
+
+AWS-AUTH
+Updating aws-auth ConfigMap
+For mapping AWS IAM users to Kubernetes clusters, We have to use aws-auth ConfigMap.
+==> kubectl -n kube-system get cm aws-auth -o yaml
+
+==> kubectl -n kube-system get cm aws-auth -o yaml > aws-auth.yaml
+ So export this aws-auth configmap to a file
+
+AWS-AUTH  FOR USER
+==> cat aws-auth.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::650781539051:role/eksctl-my-eks-1703aaa-nodegroup-my-NodeInstanceRole-jMat4ycG93uB
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+  mapUsers: |
+    - userarn: arn:aws:iam::650781539051:user/bharath
+      username: bharath
+
+AWS-AUTH  FOR
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aws-auth
+  namespace: kube-system
+data:
+  mapRoles: |
+    - rolearn: arn:aws:iam::650781539051:role/eksctl-my-eks-1703aaa-nodegroup-my-NodeInstanceRole-jMat4ycG93uB
+      username: system:node:{{EC2PrivateDNSName}}
+      groups:
+        - system:bootstrappers
+        - system:nodes
+  mapUsers: |
+    - groups:
+      - my-read
+      userarn: arn:aws:iam::650781539051:user/bharath
+      username: bharath
+    - groups:
+      - my-read
+      userarn: arn:aws:iam::650781539051:user/bharath
+      username: bharath-01
+
+ROLE
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: dev
+  name: role-dev-read
+rules:
+- apiGroups: [""]
+  resources: ["pods","services","configmaps"]
+  verbs: ["get", "watch", "list"]
+
+ROLE BINDING FOR USER
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rolebinding-dev-read
+  namespace: dev
+subjects:
+- kind: User      #Group
+  name: bharath   #my-read
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: role-dev-read
+  apiGroup: rbac.authorization.k8s.io
+
+
+ROLE BINDING FOR GROUPS
+
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: rolebinding-dev-read-group
+  namespace: dev
+subjects:
+- kind: Group
+  name: my-read
+  apiGroup: rbac.authorization.k8s.io
+roleRef:
+  kind: Role
+  name: role-dev-read
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+
+✅ What you should do
+1. In aws-auth ConfigMap
+You can define any group name (even if it doesn’t exist in IAM):
+                               
+mapUsers: |
+  - userarn: arn:aws:iam::123456789012:user/teju
+    username: teju
+    groups:
+      - dev-group
+  
+  - userarn: arn:aws:iam::123456789012:user/teju
+    username: teju-01
+    groups:
+      - dev-group                             
+
+✔ dev-group → just a name (no need in IAM)
+
+2. In RoleBinding
+Use the same group:
+                               
+subjects:
+- kind: Group
+  name: dev-group
+  apiGroup: rbac.authorization.k8s.io
+
+
+
+

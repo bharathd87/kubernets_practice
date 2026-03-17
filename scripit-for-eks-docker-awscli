@@ -1,0 +1,39 @@
+chmod +x setup_dev_env.sh
+./setup_dev_env.sh
+-----------------------------------------------------------------------------------------------
+#!/bin/bash
+# Script to setup EKS, Kubernetes CLI, AWS CLI, and Docker
+
+set -e  # Exit immediately if any command fails
+
+echo "===== Installing eksctl ====="
+curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+sudo mv /tmp/eksctl /usr/local/bin
+eksctl version
+
+echo "===== Installing kubectl ====="
+curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+chmod +x kubectl
+mkdir -p ~/.local/bin
+mv ./kubectl ~/.local/bin/kubectl
+echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
+source ~/.bashrc
+kubectl version --client
+
+echo "===== Installing AWS CLI v2 ====="
+curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+sudo apt update
+sudo apt install unzip -y
+unzip awscliv2.zip
+sudo ./aws/install
+aws --version
+
+echo "===== Installing Docker ====="
+sudo apt update
+sudo apt install docker.io -y
+sudo usermod -aG docker $USER
+
+echo "===== Setup Complete! ====="
+echo "You may need to logout/login for Docker group changes to take effect."
+-----------------------------------------------------------------------------------------------------------
+

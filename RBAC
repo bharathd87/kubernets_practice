@@ -11,8 +11,11 @@ Creating IAM Users
 I’ve added them with the AdministratorAccess policy just for the sake of demo.
 Each user has their own access key ID and secret, which is configured using AWS CLI on my system
 
-aws configure
-aws sts get-caller-identity  #to get info of which user 
+==>aws configure
+==>aws sts get-caller-identity  #to get info of which user 
+==>aws eks update-kubeconfig --region us-east-1 --name my-1703 #after aws-auth update IAM USER CLI
+==>kubectl get pods -n dev
+
 
 AWS-AUTH
 Updating aws-auth ConfigMap

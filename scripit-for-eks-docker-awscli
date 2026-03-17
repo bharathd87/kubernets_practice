@@ -16,9 +16,15 @@ curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stabl
 chmod +x kubectl
 mkdir -p ~/.local/bin
 mv ./kubectl ~/.local/bin/kubectl
-echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
-source ~/.bashrc
+
+# Update PATH in the current script/session
+export PATH=$PATH:$HOME/.local/bin
+
+# Also add to bashrc for future sessions
+grep -qxF 'export PATH=$PATH:$HOME/.local/bin' ~/.bashrc || echo 'export PATH=$PATH:$HOME/.local/bin' >> ~/.bashrc
+
 kubectl version --client
+
 
 echo "===== Installing AWS CLI v2 ====="
 curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
@@ -35,5 +41,20 @@ sudo usermod -aG docker $USER
 
 echo "===== Setup Complete! ====="
 echo "You may need to logout/login for Docker group changes to take effect."
+
 -----------------------------------------------------------------------------------------------------------
+==>eksctl version
+0.224.0
+
+==>kubectl version
+Client Version: v1.35.2
+Kustomize Version: v5.7.1
+The connection to the server localhost:8080 was refused - did you specify the right host or port?
+
+==>aws --version
+aws-cli/2.34.11 Python/3.13.11 Linux/6.17.0-1007-aws exe/x86_64.ubuntu.24
+
+==>docker --version
+Docker version 28.2.2, build 28.2.2-0ubuntu1~24.04.1
+-----------------------------------------------------------------------------------------------------------------
 

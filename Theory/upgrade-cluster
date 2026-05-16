@@ -1,0 +1,43 @@
+To Create Cluster
+eksctl create cluster --name my-eks-cluster --nodegroup-name my-worker-node --node-type t2.medium --nodes 2 --managed --region us-east-1"
+
+Cluster Upgradation
+1. Control Plane Upgrade
+2. Managed Node Group Upgrade
+3. Add-on Upgrade
+
+"one minor version at a time" like 1.32 → 1.35 ✅
+we can not upgrade like 1.34 → 1.38 ❌
+
+check current version
+kubectl version
+v1.32
+
+STEP-1
+aws eks update-cluster-version --name my-eks-cluster --kubernetes-version 1.33
+Wait for Upgrade Completion
+it will upgrade API SERVER ,SCHEDULER ,CONTROL MANAGER , ETCD
+
+STEP-2
+aws eks update-nodegroup-version --cluster-name my-eks-cluster --nodegroup-name my-worker-node
+it will upgrade node groups
+
+STEP-3
+aws eks update-addon --cluster-name my-eks-cluster --addon-name coredns
+aws eks update-addon --cluster-name my-eks-cluster --addon-name kube-proxy
+aws eks update-addon --cluster-name my-eks-cluster --addon-name vpc-cni
+it will upgrade addon's
+
+
+
+Upgrade Flow for Self-Managed Cluster
+1. Upgrade EKS control plane
+2. Create new worker nodes with updated AMI
+3. Join new nodes to cluster
+4. Cordon and drain old nodes
+    kubectl drain node-1 --ignore-daemonsets
+    Defalut-kubectlcordon node-1
+    kubectl uncordon node-1
+5. Move workloads
+6. Delete old nodes
+7. Upgrade EKS add-ons

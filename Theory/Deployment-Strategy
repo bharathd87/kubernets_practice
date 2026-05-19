@@ -1,0 +1,259 @@
+
+ReplicaSet
+
+A ReplicaSet ensures that a specified number of pod replicas are always running in the cluster.
+                or
+ReplicaSet maintains the desired number of identical pods.
+
+###“ReplicaSet is a Kubernetes object that maintains the desired number of pod replicas. 
+It provides self-healing by automatically recreating failed pods. In real projects, ReplicaSets are usually managed through Deployments.”###
+
+
+Kubernetes Deployment Strategies
+“Deployment strategies in Kubernetes define how a new application version is released with minimum downtime and minimum risk.
+Different strategies are used based on business criticality, rollback requirements, and traffic handling.”
+
+1.Rolling Update (Most Common)
+
+“Rolling update is the default deployment strategy in Kubernetes. Old pods are replaced gradually with new pods, ensuring zero downtime.”
+
+
+“In our production EKS cluster, we mostly use rolling updates for standard microservices deployments.”
+
+
+How it works
+Example:
+4 old pods running
+Kubernetes terminates 1 old pod
+Creates 1 new pod
+Process continues gradually
+
+strategy:
+  type: RollingUpdate
+
+  rollingUpdate:
+    maxUnavailable: 1
+    maxSurge: 1
+
+Important Parameters
+''''''''''''''''''''
+maxUnavailable
+How many pods can be unavailable during update.
+maxSurge
+How many extra pods can be created temporarily.
+
+Advantages
+----------
+Zero downtime
+Safer rollout
+Easy rollback
+
+
+2.Recreate Strategy
+
+“In recreate strategy, Kubernetes first terminates all old pods and then creates new pods.”
+
+“Used when application versions are incompatible, especially with database schema changes.”
+
+strategy:
+  type: Recreate
+
+Advantages
+Simple
+No version conflict
+
+Disadvantages
+Causes downtime
+
+
+3.Blue-Green Deployment
+
+“Blue-Green deployment maintains two environments: Blue is current production and Green is new version. After testing Green, traffic is switched from Blue to Green.”
+
+“Used for critical production applications where rollback should be immediate.”
+
+Flow
+Blue serves live traffic
+Green deployed separately
+Testing performed
+Load balancer/service switched
+
+Advantages
+Near zero downtime
+Instant rollback
+Safe deployment
+Disadvantages
+Requires double infrastructure
+Higher cost
+
+
+4.Canary Deployment
+
+“Canary deployment releases new version to small percentage of users first. If application is stable, traffic is gradually increased.”
+
+“We use Istio/Argo Rollouts for canary deployments in critical services to monitor latency, error rate, and performance before full rollout.”
+
+
+“In EKS, we can implement canary deployment using AWS ALB weighted target groups. Separate services are created for stable and canary versions, 
+and ALB distributes traffic between them based on configured weights using AWS Load Balancer Controller annotations.”
+
+Example
+90% traffic → v1
+10% traffic → v2
+
+Advantages
+Lower deployment risk
+Real production testing
+Easy monitoring
+Disadvantages
+Complex setup
+Requires advanced routing tools
+
+
+
+
+Real Production Canary
+
+In real projects, canary is usually done using:
+
+Argo Rollouts
+Istio
+NGINX Ingress Controller
+AWS Load Balancer Controller
+
+These tools provide:
+
+exact traffic split (5%, 10%, 20%)
+automatic rollback
+metrics-based promotion
+header/cookie-based routing
+
+Ingress controller file
+
+
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+
+metadata:
+  name: payment-canary-ingress
+
+  annotations:
+    kubernetes.io/ingress.class: alb
+
+    alb.ingress.kubernetes.io/scheme: internet-facing
+
+    alb.ingress.kubernetes.io/target-type: ip
+
+    alb.ingress.kubernetes.io/actions.forward-multiple-tg: >
+      {
+        "Type":"forward",
+        "ForwardConfig":{
+          "TargetGroups":[
+            {
+              "ServiceName":"payment-service-v1",
+              "ServicePort":"80",
+              "Weight":90
+            },
+            {
+              "ServiceName":"payment-service-v2",
+              "ServicePort":"80",
+              "Weight":10
+            }
+          ]
+        }
+      }
+
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /
+        pathType: Prefix
+
+        backend:
+          service:
+            name: forward-multiple-tg
+            port:
+              name: use-annotation
+
+
+
+            OR
+Stable Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-stable
+
+spec:
+  replicas: 9
+
+  selector:
+    matchLabels:
+      app: myapp
+      version: stable
+
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: stable
+
+    spec:
+      containers:
+      - name: myapp
+        image: nginx:1.25
+
+        ports:
+        - containerPort: 80
+
+
+
+
+Canary Deployment
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: myapp-canary
+
+spec:
+  replicas: 1
+
+  selector:
+    matchLabels:
+      app: myapp
+      version: canary
+
+  template:
+    metadata:
+      labels:
+        app: myapp
+        version: canary
+
+    spec:
+      containers:
+      - name: myapp
+        image: nginx:1.26
+
+        ports:
+        - containerPort: 80
+
+
+Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: myapp-service
+
+spec:
+  selector:
+    app: myapp
+
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 80
+
+  type: ClusterIP

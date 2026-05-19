@@ -1,0 +1,59 @@
+Kubernetes Architecture
+=>Control Plane (Master Components)
+
+1.Apiserver
+Entry point of Kubernetes cluster
+All commands go through API server
+
+2.etcd
+Key-value database of Kubernetes
+Stores cluster state and configuration
+Stores:  Pods, Deployments, Secrets, ConfigMaps, Node information
+
+3.kube-scheduler
+Decides on which worker node a pod should run
+Checks: CPU, Memory, Taints/tolerations, Affinity rules, Resource availability
+
+4.kube-controller-manager
+Runs multiple controllers continuously.
+Examples: Node Controller, ReplicaSet Controller, Deployment Controller
+
+=>Worker Nodes
+1.kubelet
+Agent running on every worker node
+Communicates with API server
+Ensures containers are running properly
+
+Responsibilities:
+Starts pods
+Monitors pod health
+Runs liveness/readiness probes
+
+2.kube-proxy
+Handles networking inside cluster
+Maintains iptables/ipvs rules
+Enables pod-to-pod and service communication
+
+Example:
+When app pod accesses database service,
+kube-proxy routes traffic correctly.
+
+
+3.Container Runtime
+Responsible for running containers.
+
+containerd
+CRI-O
+Docker (older)
+
+How Request Flows in Kubernetes
+
+Example flow:
+User runs deployment YAML
+Request goes to API server
+API server stores data in etcd
+Scheduler selects worker node
+Kubelet creates pod on node
+Container runtime starts container
+kube-proxy enables networking
+

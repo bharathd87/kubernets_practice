@@ -1,0 +1,74 @@
+“Probes in Kubernetes are health-check mechanisms used by kubelet to monitor container health and availability.
+
+There are mainly three probes:
+
+Liveness Probe
+Used to check whether application is alive.
+If it fails, Kubernetes restarts the container automatically.
+
+Readiness Probe
+Used to check whether application is ready to accept traffic.
+If it fails, pod is removed from service endpoints but container is not restarted.
+
+Startup Probe
+Used for slow-starting applications to prevent premature restarts during startup phase.
+
+Probes help achieve self-healing, high availability, and zero-downtime deployments in production Kubernetes environments.”
+
+////////////
+----------------------------------------------------------------
+Important Difference
+Probe	What Happens on Failure
+Liveness	   Container restarted
+Readiness	   Traffic stopped and evicted from endpoints
+-----------------------------------------------------------------
+3.Startup Probe
+Used for slow-starting applications.
+
+Example
+startupProbe:
+  httpGet:
+    path: /startup
+    port: 8080
+
+  failureThreshold: 30
+  periodSeconds: 10
+
+Meaning:
+Application gets 300 seconds to start
+
+
+
+Real Production Example
+A common production setup:
+
+Readiness Probe
+→ controls traffic
+
+Liveness Probe
+→ handles stuck/crashed apps
+
+Startup Probe
+→ protects slow-starting apps
+
+Simple Visualization
+********************
+Container Starts
+       ↓
+Startup Probe
+       ↓
+Readiness Probe
+       ↓
+Traffic Starts
+       ↓
+Liveness Probe monitors continuously
+
+
+Types of Probe Checks
+Kubernetes supports 3 probe methods:
+Type          	Description
+HTTP GET	      Calls HTTP endpoint
+TCP Socket	    Checks port open or not
+Exec Command	  Runs command inside container
+
+

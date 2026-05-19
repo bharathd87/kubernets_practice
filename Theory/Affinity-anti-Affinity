@@ -1,0 +1,144 @@
+In Kubernetes, affinity and anti-affinity control where Pods are scheduled.
+“In Kubernetes, affinity and anti-affinity are scheduling rules used to control where pods are placed.
+
+There are 4 main types:
+
+Node Affinity      →  Pod chooses nodes
+Node Anti-Affinity →  Pod avoids nodes
+Pod Affinity       →  Pod wants to be near another pod
+Pod Anti-Affinity  →  Pod wants to stay away from another pod
+
+
+Node affinity is used when we want pods to run on specific nodes based on node labels.
+For example, scheduling database workloads only on SSD or GPU nodes.
+
+Node anti-affinity is used to avoid scheduling pods on certain nodes, like avoiding dev or spot-instance nodes for production workloads.
+
+Pod affinity is used when two applications should stay close together on the same node or same zone for low latency communication.
+Example: application pod near Redis cache pod.
+
+Pod anti-affinity is mainly used for high availability.
+It ensures replicas are spread across multiple nodes so that if one node fails, all replicas are not impacted.
+
+For example, if I have 3 worker nodes and 3 replicas with pod anti-affinity, Kubernetes places one pod per node.
+In production, we commonly use:
+node affinity for workload isolation
+pod anti-affinity for high availability and fault tolerance.”
+
+Then if interviewer asks deeper:
+
+You can add:
+
+“There are two rule types:
+
+requiredDuringSchedulingIgnoredDuringExecution → strict rule
+preferredDuringSchedulingIgnoredDuringExecution → soft rule”
+
+
+1. Node Affinity
+
+A Pod is scheduled ONLY on nodes matching labels.
+
+Example--   node1 -> disktype=ssd
+            node2 -> disktype=hdd
+
+Pod YAML:
+
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nginx
+spec:
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: disktype
+            operator: In
+            values:
+            - ssd
+
+  containers:
+  - name: nginx
+    image: nginx
+
+This pod runs only on  ======>> node1
+
+2. Node Anti-Affinity
+operator: NotIn
+
+Example---
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: environment
+          operator: NotIn
+          values:
+          - dev
+
+
+3. Pod Affinity
+A pod wants to run close to another pod.
+
+Example:
+Application pod wants to stay near Redis pod for low latency.
+
+affinity:
+  podAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - redis
+
+      topologyKey: kubernetes.io/hostname
+
+
+
+4. Pod Anti-Affinity
+
+A pod wants to stay away from another pod.
+
+VERY common in production.
+
+Example:
+
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app
+          operator: In
+          values:
+          - myapp
+
+      topologyKey: kubernetes.io/hostname
+
+
+
+#########
+Important Keywords
+requiredDuringSchedulingIgnoredDuringExecution
+Strict rule.
+
+If condition fails:
+Pod will NOT schedule
+preferredDuringSchedulingIgnoredDuringExecution
+
+Soft rule.
+Kubernetes tries to follow it.
+
+If not possible:
+Pod still schedules
+####################3
+Easy Memory Trick
+Feature	Meaning
+Affinity =====>	Attract
+Anti-Affinity	======>  Repel
+####################

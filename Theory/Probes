@@ -1,10 +1,10 @@
 “Probes in Kubernetes are health-check mechanisms used by kubelet to monitor container health and availability.
 
 There are mainly three probes:
-
 Liveness Probe
 Used to check whether application is alive.
 If it fails, Kubernetes restarts the container automatically.
+once it cross the threshold reaches it will re-create container
 
 Readiness Probe
 Used to check whether application is ready to accept traffic.
@@ -15,12 +15,49 @@ Used for slow-starting applications to prevent premature restarts during startup
 
 Probes help achieve self-healing, high availability, and zero-downtime deployments in production Kubernetes environments.”
 
-////////////
+1. Liveness Probe
+
+Checks whether the application is still alive.
+
+If liveness probe fails:
+Kubernetes restarts the container
+Liveness probe detects this and restarts the container automatically.
+
+Example
+livenessProbe:
+  httpGet:
+    path: /health
+    port: 8080
+
+  initialDelaySeconds: 30
+  periodSeconds: 10
+  timeoutSeconds: 5
+  failureThreshold: 3
+
+Kubernetes checks:
+http://pod-ip:8080/health
+
+
+2.Readiness Probe
+Checks whether the application is ready to serve traffic.
+If readiness probe fails:
+Pod is removed from Service endpoints
+BUT:  Container is NOT restarted
+
+Example
+readinessProbe:
+  httpGet:
+    path: /ready
+    port: 8080
+
+  initialDelaySeconds: 5
+  periodSeconds: 3
+
 ----------------------------------------------------------------
 Important Difference
 Probe	What Happens on Failure
 Liveness	   Container restarted
-Readiness	   Traffic stopped and evicted from endpoints
+Readiness	   Traffic stopped and removed from Service endpoints
 -----------------------------------------------------------------
 3.Startup Probe
 Used for slow-starting applications.
@@ -36,9 +73,7 @@ startupProbe:
 
 Meaning:
 Application gets 300 seconds to start
-
-
-
+--------------------------------------------------
 Real Production Example
 A common production setup:
 
@@ -50,7 +85,7 @@ Liveness Probe
 
 Startup Probe
 → protects slow-starting apps
-
+------------------------------------------------
 Simple Visualization
 ********************
 Container Starts
@@ -63,12 +98,12 @@ Traffic Starts
        ↓
 Liveness Probe monitors continuously
 
-
+----------------------------------------------------
 Types of Probe Checks
 Kubernetes supports 3 probe methods:
 Type          	Description
 HTTP GET	      Calls HTTP endpoint
 TCP Socket	    Checks port open or not
 Exec Command	  Runs command inside container
-
+-----------------------------------------------------
 

@@ -1,0 +1,40 @@
+“Kubernetes is a container orchestration platform used to automate deployment, scaling, management, and networking of containerized applications.
+
+“In production, Kubernetes helps achieve scalability, high availability, automation, and faster deployments with minimal downtime.”
+
+Some major advantages of Kubernetes are:
+
+1.High Availability
+Kubernetes automatically distributes application replicas across nodes.
+If one pod or node fails, Kubernetes recreates the pod automatically.
+
+2.Auto Scaling
+Using Horizontal Pod Autoscaler, Kubernetes can automatically increase or decrease pods based on CPU or memory usage.
+
+3.Self-Healing
+Kubernetes continuously monitors pod health.
+If a container crashes, it restarts automatically.
+If a node goes down, pods are rescheduled to another node.
+
+4.Load Balancing & Service Discovery
+Kubernetes provides built-in service discovery and load balancing using Services and Ingress.
+
+5.Rolling Updates & Rollbacks
+Applications can be updated with zero downtime using rolling updates.
+If deployment fails, rollback can be done easily.
+
+6.Efficient Resource Utilization
+Kubernetes schedules workloads based on CPU and memory requests/limits, improving infrastructure utilization.
+
+7.Portability
+Applications can run on any cloud or on-premises environment like AWS EKS, Azure AKS, GKE, or bare metal.
+
+8.Declarative Management
+Infrastructure and applications are managed using YAML manifests, supporting Infrastructure as Code practices.
+
+9.Security & Isolation
+Kubernetes supports namespaces, RBAC, secrets, network policies, and pod security features.
+
+10.Ecosystem & Integrations
+It integrates easily with tools like:
+Jenkins Helm Prometheus Grafana ArgoCD Istio Datadog

@@ -1,0 +1,398 @@
+Prerequisites for VELERO-Backup
+EKS Cluster, AWS, AWS CLI, S3 BUCKET, KUBECTL, 
+
+=>aws sts get-caller-identity
+to check user info
+
+Add configuration file 
+The Kubernetes configuration file is stored at ~/.kube/config by default.
+
+=> aws eks update-kubeconfig \
+   --region ap-south-1 \
+   --name dev-eks
+
+Velero has two components:
+1. Velero Client (CLI)
+2. Velero Server
+
+
+1. Velero Client (CLI)
+The client is the command-line tool you install on:
+Bastion Host
+EC2 Machine
+Admin Laptop
+Jenkins Server
+
+2. Velero Server
+Installed inside Kubernetes.
+Usually in:   Namespace: velero
+
+=> wget https://github.com/vmware-tanzu/velero/releases/latest/download/velero-linux-amd64.tar.gz        ------Download Velero
+=> tar -xvf velero-linux-amd64.tar.gz                        ----Extract
+=> sudo mv velero-*-linux-amd64/velero /usr/local/bin/       ----Move binary to PATH
+=> velero version --client-only                              ----Client:   Version: v1.16.x
+=======================================================================================================================================
+Create S3 Bucket for Velero Backup
+
+aws s3 mb s3://eks-velero-backup-prod --region ap-south-1
+
+               OR
+
+Enable Versioning (Recommended)
+-------------------------------
+aws s3api put-bucket-versioning \
+  --bucket eks-velero-backup-prod \
+  --versioning-configuration Status=Enabled
+
+                 OR
+
+Enable Encryption (Recommended)
+-------------------------------
+aws s3api put-bucket-encryption \
+  --bucket eks-velero-backup-prod \
+  --server-side-encryption-configuration '{
+    "Rules": [{
+      "ApplyServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+      }
+    }]
+  }'
+========================================================================================================================================
+1. Create IAM Policy for Velero S3 Access
+and If You Need EBS Snapshot Backups Too (Add EC2 permissions to the policy)
+
+Example policy:
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "VeleroBucketAccess",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::eks-velero-backup-prod",
+        "arn:aws:s3:::eks-velero-backup-prod/*"
+      ]
+    }
+  ]
+}
+
+Save as:
+velero-s3-policy.json
+
+Create policy:
+aws iam create-policy \
+  --policy-name VeleroS3Policy \
+  --policy-document file://velero-s3-policy.json
+
+2. Create IAM User
+aws iam create-user \
+  --user-name velero-user
+
+3. Attach Policy to User
+aws iam attach-user-policy \
+  --user-name velero-user \
+  --policy-arn arn:aws:iam::<ACCOUNT_ID>:policy/VeleroS3Policy
+
+4. Create Access Key
+aws iam create-access-key \
+  --user-name velero-user
+
+Output:
+{
+  "AccessKey": {
+    "AccessKeyId": "AKIAxxxxxx",
+    "SecretAccessKey": "xxxxxxxxxxxxx"
+  }
+}
+
+Save these securely.
+
+5. Create Velero Credentials File
+
+cat > credentials-velero <<EOF
+[default]
+aws_access_key_id=AKIAxxxxxx
+aws_secret_access_key=xxxxxxxxxxxxx
+EOF
+
+
+velero install \
+  --provider aws \
+  --plugins velero/velero-plugin-for-aws:v1.10.0 \
+  --bucket eks-velero-backup-prod \
+  --backup-location-config region=ap-south-1 \
+  --snapshot-location-config region=ap-south-1 \
+  --secret-file ./credentials-velero
+
+          OR 
+     IRSA method
+velero install \ 
+--provider aws \ 
+--plugins velero/velero-plugin-for-aws:v1.10.0 \ 
+--bucket eks-velero-backup \ 
+--backup-location-config region=ap-south-1 \ 
+--snapshot-location-config region=ap-south-1 \ 
+--service-account-name velero
+
+IRSA = IAM Roles for Service Accounts
+Velero Pod -> ServiceAccount -> IAM Role ->AWS
+
+"For Velero on EKS, I use IRSA instead of AWS access keys. First, I enable the EKS OIDC provider. 
+Then I create an IAM policy with S3 and EBS snapshot permissions and attach it to an IAM role. 
+I create a Kubernetes service account named velero and annotate it with the IAM role ARN. 
+During installation I use --service-account-name velero --no-secret. When the Velero pod needs AWS access, 
+it uses the service account token to assume the IAM role through the EKS OIDC provider and receives temporary credentials from AWS STS. 
+This avoids storing access keys and follows AWS security best practices."
+
+command explaination
+1.velero install
+Installs the Velero server components into the Kubernetes cluster.
+Creates the velero namespace.
+Deploys Velero pods and controllers.
+
+2. --provider aws
+Tells Velero that the cloud provider is AWS.
+Velero loads the AWS plugin.
+Enables integration with:
+S3
+EBS Snapshots
+IAM
+
+
+3.  --plugins velero/velero-plugin-for-aws:v1.10.0
+What it does: Installs the AWS plugin.
+Think of it as: Translator between Velero and AWS
+With plugin:
+Velero -> AWS Plugin -> AWS APIs
+
+The plugin allows:
+Create EBS Snapshot
+Upload to S3
+Restore from S3
+List Backups
+
+Verify:
+=>kubectl describe deployment velero -n velero
+Look for:
+velero-plugin-for-aws
+
+4.--bucket eks-velero-backup
+Specifies the S3 bucket where backups will be stored.
+Velero saves:
+Deployments
+Services
+ConfigMaps
+Secrets
+Backup metadata
+
+
+5. --backup-location-config region=ap-south-1
+What it does: Tells Velero:   My S3 bucket is located in ap-south-1
+
+Without region:
+Velero may not find the bucket.
+
+
+6.--snapshot-location-config region=ap-south-1
+What it does:  Configures where EBS snapshots are created.
+
+Example:  Pod --> PVC  --> EBS Volume --> Snapshot
+When backup runs: velero backup create prod-backup
+Velero creates:
+snap-12345
+
+in:
+AWS
+→ EC2
+→ Snapshots
+→ ap-south-1
+
+Stored as:
+VolumeSnapshotLocation
+Check:
+velero snapshot-location get
+Output: default
+
+
+7. --secret-file ./credentials-velero
+What it does: Provides AWS credentials to Velero.
+
+File content:
+[default]
+aws_access_key_id=AKIAxxxx
+aws_secret_access_key=xxxxxxxx
+
+Velero reads this file.
+Creates Kubernetes Secret:  kubectl get secret -n velero
+
+Velero uses these credentials to:
+Upload backups to S3
+Create EBS snapshots
+Restore backups
+================================================================================
+What is a ServiceAccount?
+A ServiceAccount is the identity used by a pod inside Kubernetes.
+Example:
+User Account --> Human Login
+
+ServiceAccount --> Pod Login
+
+When the Velero pod starts: Velero Pod --> ServiceAccount: velero
+
+
+
+Why do we specify it?
+
+In EKS with IRSA:
+
+Velero Pod --> ServiceAccount --> IAM Role --> AWS
+ 
+AWS permissions are attached to the ServiceAccount.
+So Velero must use the correct ServiceAccount.
+
+
+
+Example IRSA Setup
+
+Create ServiceAccount
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: velero
+  namespace: velero
+
+Apply:
+kubectl apply -f sa.yaml
+
+Attach IAM Role
+kubectl annotate serviceaccount velero \
+  -n velero \
+  eks.amazonaws.com/role-arn=arn:aws:iam::123456789012:role/VeleroBackupRole
+
+Verify:
+kubectl describe sa velero -n velero
+
+Output:
+Annotations:
+  eks.amazonaws.com/role-arn=arn:aws:iam::123456789012:role/VeleroBackupRole
+
+
+Flow like:  Velero Pod --> Uses ServiceAccount: velero --> Assumes IAM Role: VeleroBackupRole --> Accesses S3 and EBS
+
+Verify Which ServiceAccount Velero Uses
+kubectl get deployment velero -n velero -o yaml
+Look for: spec:  serviceAccountName: velero
+
+"--service-account-name velero tells Velero to run using the Kubernetes ServiceAccount named velero. In EKS, 
+this is commonly used with IRSA, where the ServiceAccount is mapped to an IAM role. 
+The Velero pod assumes that IAM role and receives temporary AWS credentials to access S3 and create EBS snapshots without storing access keys."
+======================================================================================================================================================================================
+1. Backup Entire Cluster
+velero backup create full-cluster-backup
+
+2. Backup Specific Namespace
+velero backup create payment-backup --include-namespaces dev
+
+3.Check
+velero backup get
+
+4. Backup Using Labels
+Backup resources having label:
+velero backup create payment-backup --selector app=payment
+
+Multiple labels:
+velero backup create prod-backup --selector app=payment,env=prod
+
+5. Backup Excluding Namespace
+velero backup create cluster-backup --exclude-namespaces kube-system
+
+6. Backup Specific Resources
+Only deployments:
+velero backup create deployment-backup --include-resources deployments
+
+Multiple resources:
+velero backup create app-backup --include-resources deployments,services,configmaps,secrets
+
+7.Schedule Specific Namespace
+velero schedule create payment-daily --include-namespaces payment --schedule="0 2 * * *"
+
+8. Backup With TTL
+Delete backup automatically after 7 days:
+velero backup create prod-backup --ttl 168h0m0s             (168 hours = 7 days)
+
+9. Describe Backup
+velero backup describe payment-backup
+
+10. View Backup Logs
+velero backup logs payment-backup
+
+11. List Backups
+velero backup get
+NAME                  STATUS
+payment-backup        Completed
+daily-backup-abc123   Completed
+
+
+
+1.List Available Backups
+Before restoring:
+velero backup get
+
+NAME                 STATUS
+prod-backup          Completed
+payment-backup       Completed
+
+2. Restore Entire Backup
+Restore everything from a backup:
+velero restore create --from-backup prod-backup
+
+This restores:
+Namespaces
+Deployments
+Services
+ConfigMaps
+Secrets
+PVCs
+
+
+3.Restore with Custom Restore Name
+velero restore create prod-restore --from-backup prod-backup
+
+
+4. Restore Specific Namespace
+Suppose backup contains:  payment--orders--frontend
+Restore only payment:
+velero restore create --from-backup prod-backup --include-namespaces payment
+
+
+5. Restore Namespace to New Namespace
+Very common for testing.
+Backup contains: payment
+Restore as: payment-new
+
+Command:
+velero restore create --from-backup payment-backup --namespace-mappings payment:payment-new
+
+
+6. Restore Specific Resources
+Restore only deployments:
+velero restore create --from-backup prod-backup --include-resources deployments
+
+Multiple resources:
+velero restore create --from-backup prod-backup --include-resources deployments,services
+
+
+7. Restore Excluding Resources
+velero restore create --from-backup prod-backup --exclude-resources secrets
+Everything restored except secrets.
+
+
+
+

@@ -1,0 +1,39 @@
+INGRESS
+Ingress is a Kubernetes object that defines how external traffic reaches services inside the cluster.
+             or
+Ingress is a Kubernetes API object that manages external HTTP/HTTPS access to services running inside the cluster. 
+It acts as a centralized routing layer where we define rules such as host-based routing, path-based routing, SSL termination, and traffic redirection.
+
+Instead of exposing every application using separate LoadBalancers, we use Ingress to expose multiple services through a single entry point.
+
+example:
+Internet User-->Route53-->ALB-->AWS Load Balancer Controller-->Ingress-->Service-->pods 
+app.company.com/api     --> api-service
+app.company.com/web     --> web-service
+admin.company.com       --> admin-service
+
+
+Ingress Controller
+Kubernetes itself doesn't create load balancers.
+An Ingress Controller watches Ingress resources and creates the actual load balancer.
+              or
+Ingress itself is just a configuration object; it cannot process traffic. 
+An Ingress Controller is the actual component that watches Ingress resources and implements the routing rules.
+
+The Ingress Controller continuously monitors the Kubernetes API server and creates the required load balancer configurations based on the Ingress definitions.
+
+Examples:
+Ingress Controller                 Creates
+NGINX                     	       NGINX Load Balancer
+Traefik                            Traefik LB
+AWS Load Balancer Controller	     AWS ALB
+HAProxy	                           HAProxy LB
+
+Prerequisites
+You need:
+Running EKS cluster
+kubectl installed
+eksctl installed
+helm installed
+AWS CLI configured
+IAM permissions

@@ -62,11 +62,11 @@ The Ingress Controller acts as a reverse proxy and integrates with the OIDC prov
 #   We MUST follow this exact order:
 #
 #   1. OIDC Provider     → Allow EKS to talk to AWS IAM
-#   2. Download Policy   → Get the list of permissions needed
-#   3. Create Policy     → Register permissions in AWS IAM
-#   4. Attach Policy     → Give Worker Nodes those permissions
-#   5. Install Helm      → Package manager to install controller
-#   6. Add Helm Repo     → Tell Helm where to get the controller (REPO OF CONTROLLER)
+#   2. Download Policy   → Get the list of permissions needed (IAM POLICY OF ALB CONTROLLER)
+#   3. Create Policy     → Register permissions in AWS IAM (IAM PLOICY INSIDE AWS)
+#   4. Attach Policy     → Give Worker Nodes those permissions (ATTACH POLICY TO WORKER NODE)
+#   5. Install Helm      → Package manager to install controller (INSTALL HELM)
+#   6. Add Helm Repo     → Tell Helm where to get the controller (ADD AWS EKS HELM REPO )
 #   7. Helm Install      → Deploy controller pod into cluster (USE HELM INSTALL AWS ALB CONTROLLER)
 #   8. Verify            → Confirm pods are running
 #   9. Apply Ingress     → Now ALB will be created automatically
@@ -75,11 +75,7 @@ The Ingress Controller acts as a reverse proxy and integrates with the OIDC prov
 
 
 
-
-
-
-
-
+INGRESS.YAML
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:

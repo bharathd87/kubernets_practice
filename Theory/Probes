@@ -1,3 +1,9 @@
+Probe	                     Purpose	                                              Action
+Liveness Probe	          Checks if the application is alive	                    Restarts the container if it fails
+Readiness Probe	          Checks if the application is ready to serve traffic	    Removes pod from Service endpoints if it fails
+Startup Probe	            Checks if the application has started successfully	    Delays liveness/readiness checks until startup succeeds
+
+
 “Probes in Kubernetes are health-check mechanisms used by kubelet to monitor container health and availability.
 
 There are mainly three probes:

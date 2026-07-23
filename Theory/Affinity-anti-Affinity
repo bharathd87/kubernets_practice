@@ -65,9 +65,7 @@ spec:
 
 This pod runs only on  ======>> node1
 
-2. Node Anti-Affinity
 operator: NotIn
-
 Example---
 affinity:
   nodeAffinity:
@@ -78,6 +76,18 @@ affinity:
           operator: NotIn
           values:
           - dev
+
+
+
+2.Node Anti-Affinity
+
+affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchLabels:
+                app: nginx
+            topologyKey: kubernetes.io/hostname
 
 
 3. Pod Affinity

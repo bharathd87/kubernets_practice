@@ -15,7 +15,7 @@ Decides on which worker node a pod should run
 Checks: CPU, Memory, Taints/tolerations, Affinity rules, Resource availability
 
 4.kube-controller-manager
-Runs multiple controllers continuously.
+Runs controllers that continuously monitor cluster state.
 Examples: Node Controller, ReplicaSet Controller, Deployment Controller
 
 =>Worker Nodes

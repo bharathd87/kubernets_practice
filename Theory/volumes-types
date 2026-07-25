@@ -1,0 +1,191 @@
+In Kubernetes, a Volume is a storage mechanism that allows containers in a Pod to store and share data.
+
+Volume Types Commonly Used in Real Projects
+
+PersistentVolume (PV) – Represents persistent storage.
+PersistentVolumeClaim (PVC) – Pods request storage through PVCs.
+StorageClass – Dynamically provisions storage (e.g., AWS EBS gp3).
+ConfigMap – Stores application configuration.
+Secret – Stores passwords, API keys, and certificates.
+emptyDir – Temporary storage shared within a Pod.
+CSI Volumes – Integrates Kubernetes with cloud storage (AWS EBS/EFS, Azure Disk, GCP PD, IBM Block/File Storage).
+NFS or EFS – Shared file storage when multiple Pods need concurrent access.
+
+
+
+Kubernetes Volume Types
+1.emptyDir
+2.hostpath
+3.pv
+4.pvc
+5.storage class
+6.config map
+7.scretes
+8.NFC
+
+1. emptyDir
+Created when a Pod starts.
+Deleted when the Pod is deleted.
+Shared between all containers in the Pod.
+
+Directly created using deployment file 
+volumes:
+- name: cache-volume
+  emptyDir: {}
+
+containers:
+- name: app
+  volumeMounts:
+  - mountPath: /cache
+    name: cache-volume
+
+Lifecycle
+Pod Starts
+      │
+emptyDir Created
+      │
+Containers Share Data
+      │
+Pod Deleted
+      │
+Data Deleted
+--------------------------------------------------------
+
+2. hostPath
+
+Uses a directory from the Kubernetes node.
+
+volumes:
+- name: host-storage
+  hostPath:
+    path: /data/logs
+----------------------------------------------------------
+
+3. PersistentVolume (PV)
+
+A PersistentVolume (PV) is storage created by the cluster administrator or dynamically by a StorageClass.
+
+Lifecycle
+Application
+     │
+PVC
+     │
+PV
+     │
+AWS EBS
+
+------------------------------------------
+
+
+4. PersistentVolumeClaim (PVC)
+
+A PVC is a request for storage by a Pod.
+
+Example
+
+kind: PersistentVolumeClaim
+
+spec:
+  accessModes:
+  - ReadWriteOnce
+
+  resources:
+    requests:
+      storage: 10Gi
+
+The Pod mounts the PVC instead of directly using the PV.
+  ----------------------------------------------------------
+  StorageClass
+
+StorageClass dynamically creates PersistentVolumes.
+
+Without StorageClass
+Admin creates PV
+       │
+PVC uses PV
+
+With StorageClass
+PVC Created
+      │
+StorageClass
+      │
+Automatically Creates PV
+
+Example
+kind: StorageClass
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  ------------------------------------------------------
+
+ 6. ConfigMap Volume
+
+Stores non-sensitive configuration files.
+
+Example
+
+volumes:
+- name: config-volume
+  configMap:
+    name: app-config
+
+Mounted as
+
+/etc/config
+    |
+    |-- application.properties
+
+Use Cases
+
+application.properties
+nginx.conf
+config.yaml
+  ---------------------------------------------------
+7. Secret Volume
+
+Stores sensitive data.
+
+Example
+
+volumes:
+- name: secret-volume
+  secret:
+    secretName: db-secret
+
+Mounted as
+
+/etc/secret
+
+username
+password
+
+Use Cases
+
+Database password
+API key
+TLS certificates
+  ----------------------------------------
+8. NFS Volume
+
+Mounts a shared Network File System.
+
+NFS Server
+     │
+-----------------------
+| Node1  Node2  Node3 |
+-----------------------
+     │
+Shared Storage
+
+Example
+
+volumes:
+- name: nfs-volume
+  nfs:
+    server: 10.10.10.20
+    path: /shared
+
+Use Cases
+
+Shared storage
+Multiple Pods reading/writing the same data

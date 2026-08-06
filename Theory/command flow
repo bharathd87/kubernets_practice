@@ -12,6 +12,9 @@ Container Runtime pulls image
 Container starts 
 Pod becomes Running
 
+"I apply the Deployment manifest. The API Server validates it and stores it in etcd. The Deployment Controller creates a ReplicaSet, 
+which creates the required Pods. The Scheduler assigns the Pods to worker nodes, and the Kubelet starts the containers."
+
 2.kubectl apply -f service.yaml
 kubectl
 Reads service.yaml

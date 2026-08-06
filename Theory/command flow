@@ -1,0 +1,33 @@
+1.      kubectl apply -f deployment.yaml
+kubectl
+Reads deployment.yaml
+API Server (Authentication + Authorization + Validation)
+Stores Deployment in etcd
+Deployment Controller notices new Deployment
+Creates ReplicaSet
+ReplicaSet creates Pods
+Scheduler assigns Pods to Worker Nodes
+Kubelet receives Pod specification
+Container Runtime pulls image
+Container starts 
+Pod becomes Running
+
+2.kubectl apply -f service.yaml
+kubectl
+Reads service.yaml
+API Server
+Validation
+Stores Service in etcd
+Service Controller detects Service
+Creates ClusterIP
+kube-proxy updates iptables/IPVS rules
+Service starts routing traffic
+Traffic reaches matching Pods
+
+3.   kubectl get deployments or kubectl get pods
+kubectl
+HTTPS Request
+API Server
+Reads information from etcd
+Returns current status
+kubectl prints output

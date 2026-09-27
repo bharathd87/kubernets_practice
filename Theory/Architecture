@@ -57,3 +57,37 @@ Kubelet creates pod on node
 Container runtime starts container
 kube-proxy enables networking
 
+
+
+“Kubernetes has a control-plane and worker-node architecture.
+
+The Control Plane is responsible for managing the overall cluster state. The main components are kube-apiserver, etcd, kube-scheduler, and 
+kube-controller-manager.
+
+The kube-apiserver is the central entry point for Kubernetes API requests. When I execute a kubectl command, the request reaches the API Server, 
+where authentication, authorization, validation, and admission processing take place.
+
+etcd is the distributed key-value store where Kubernetes maintains the cluster state and configuration.
+
+The scheduler is responsible for selecting an appropriate worker node for newly created Pods based on resource requirements, affinity, 
+taints and tolerations, and other scheduling constraints.
+
+The controller manager continuously compares the desired state with the actual state and takes corrective action. For example, 
+if a Deployment requires three replicas but only two Pods are running, the controllers work to create the missing Pod.
+
+Worker nodes are responsible for running application workloads. Each node has kubelet, a container runtime such as containerd, and 
+networking components such as kube-proxy depending on the cluster networking implementation.
+
+The kubelet communicates with the API Server and ensures that the Pods assigned to its node are running correctly. 
+The container runtime is responsible for creating and running the containers.
+
+Pods are the smallest deployable units in Kubernetes. Applications are usually exposed internally through Services, 
+which provide a stable endpoint even though Pod IPs can change.
+
+For external HTTP/HTTPS traffic, we can use Ingress together with an ingress controller. In AWS EKS, for example, 
+the AWS Load Balancer Controller can provision and configure an AWS Application Load Balancer.
+
+From an application perspective, the traffic can flow as DNS → Load Balancer → Ingress → Service → Pod.
+
+So, in simple terms, the Control Plane manages the desired state and scheduling, while Worker Nodes run the actual application workloads.”
+

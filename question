@@ -1,0 +1,65 @@
+🔥 Top 20 Kubernetes Interview Questions
+
+1	Explain Kubernetes architecture.	
+Control Plane, Worker Nodes, API Server, etcd, Scheduler, Controller Manager, kubelet, kube-proxy
+
+2	What happens when you run kubectl apply -f deployment.yaml?	
+Complete request flow from kubectl → API Server → etcd → controllers → scheduler → kubelet
+
+3	What is a Pod? Why can't we deploy containers directly?	
+Smallest deployable Kubernetes unit; Pod lifecycle and networking
+
+4	What is the difference between Deployment and Service?	
+Deployment manages Pods/replicas; Service provides stable networking/access
+
+5	Explain Deployment, ReplicaSet and Pod relationship.	
+Deployment → ReplicaSet → Pods
+
+6	What are different Kubernetes Service types?	
+ClusterIP, NodePort, LoadBalancer, ExternalName
+
+7	How does Kubernetes networking work?	
+Pod-to-Pod, Pod-to-Service, external traffic, CNI
+
+8	What is Ingress? How does it work?	
+Ingress resource, Ingress Controller, ALB/Nginx, routing
+
+9	What are ConfigMaps and Secrets?	
+Configuration management and sensitive data
+
+10	What are Kubernetes namespaces?	
+Resource isolation, RBAC, quotas, environments
+
+11	Explain Kubernetes RBAC.	
+User/ServiceAccount, Role, ClusterRole, RoleBinding, ClusterRoleBinding
+
+12	What are Requests and Limits?	
+CPU/memory scheduling, throttling, OOMKilled
+
+13	What is HPA? How does it work?	
+Horizontal Pod Autoscaler, metrics-server, CPU/memory/custom metrics
+
+14	What is the difference between Liveness, Readiness and Startup probes?	
+Container health, traffic readiness, slow application startup
+
+15	How do you troubleshoot a Pod in CrashLoopBackOff?	
+kubectl describe, logs, previous logs, events, resources, probes
+
+
+16	How do you troubleshoot a Pod stuck in Pending?	
+Resources, node selectors, taints/tolerations, affinity, PVCs
+
+
+17	How do you troubleshoot a Kubernetes node in NotReady state?	
+kubelet, CNI, disk/memory pressure, container runtime, node conditions
+
+
+18	Explain Kubernetes storage.	
+PV, PVC, StorageClass, dynamic provisioning, CSI
+
+
+19	How do you perform a Kubernetes/EKS upgrade?	
+Version compatibility, control plane, node groups, add-ons, testing, rollback planning
+
+20	How do you back up and restore a Kubernetes cluster?	
+etcd/application backup, Velero, PV snapshots, restore process
